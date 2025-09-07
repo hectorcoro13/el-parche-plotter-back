@@ -4,6 +4,7 @@ import { config as dotenvConfig } from 'dotenv';
 dotenvConfig({ path: '.development.env' });
 
 export const getAuth0Config = (auth0Service: Auth0Service) => {
+  const isProduction = process.env.NODE_ENV === 'production';
   return {
     authRequired: false,
     auth0Logout: true,
@@ -16,9 +17,9 @@ export const getAuth0Config = (auth0Service: Auth0Service) => {
 
     session: {
       cookie: {
-        secure: true,
+        secure: isProduction,
         httpOnly: true,
-        sameSite: 'None',
+        sameSite: isProduction ? 'None' : 'Lax',
       },
     },
 

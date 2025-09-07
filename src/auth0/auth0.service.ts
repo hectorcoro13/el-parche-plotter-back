@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Users } from '../Users/entities/user.entity';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class Auth0Service {
@@ -10,6 +11,7 @@ export class Auth0Service {
     @InjectRepository(Users)
     private readonly userRepository: Repository<Users>,
     private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
   private async findByAuth0Id(auth0Id: string): Promise<Users | null> {
@@ -25,6 +27,7 @@ export class Auth0Service {
   ): Promise<{ user: Users; token: string }> {
     try {
       let user = await this.findByAuth0Id(auth0UserData.sub);
+      let isNewUser = false;
 
       if (user) {
       } else {
@@ -34,6 +37,7 @@ export class Auth0Service {
           existingUserByEmail.auth0Id = auth0UserData.sub;
           user = await this.userRepository.save(existingUserByEmail);
         } else {
+          isNewUser = true;
           const newUser = this.userRepository.create({
             auth0Id: auth0UserData.sub,
             name: auth0UserData.name || 'User',
@@ -42,6 +46,13 @@ export class Auth0Service {
           });
           user = await this.userRepository.save(newUser);
         }
+      }
+      if (isNewUser) {
+        await this.mailerService.sendMail({
+          to: user.email,
+          subject: '¡Bienvenido a El Parche Plotter!',
+          html: `<h1>¡Hola, ${user.name}!</h1><p>Te damos la bienvenida a nuestra comunidad. Tu cuenta ha sido creada a través de Google.</p>`,
+        });
       }
 
       if (!user.id) {
