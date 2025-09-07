@@ -14,6 +14,9 @@ import { MailModule } from './mail/mail.module';
 import { MercadoPagoModule } from './mercadoPago/mercadopago.module';
 import { CartModule } from './cart/cart.module';
 import { Auth0Module } from './auth0/auth0.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -42,7 +45,7 @@ import { Auth0Module } from './auth0/auth0.module';
       signOptions: { expiresIn: '1h' },
     }),
   ],
-  controllers: [],
-  providers: [],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
