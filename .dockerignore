@@ -1,0 +1,13 @@
+# Dependencias y caché
+node_modules
+npm-debug.log
+.npm
+
+# Archivos de build
+dist
+.next
+
+# Archivos de entorno y configuración local
+.env
+.env.development
+.DS_Store

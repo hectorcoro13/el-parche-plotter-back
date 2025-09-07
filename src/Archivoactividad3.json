@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Retablo Decorativo 13x19cm",
+    "description": "Retablo decorativo personalizado de alta calidad, ideal para espacios pequeños y detalles únicos.",
+    "price": 8000,
+    "stock": 50,
+    "category": "retablos"
+  },
+  {
+    "name": "Retablo Decorativo 27x19cm",
+    "description": "Retablo decorativo personalizado de alta calidad, un tamaño versátil para cualquier pared.",
+    "price": 12000,
+    "stock": 50,
+    "category": "retablos"
+  },
+  {
+    "name": "Retablo Decorativo 40x28cm",
+    "description": "Retablo decorativo personalizado de alta calidad, perfecto para retratos y piezas centrales.",
+    "price": 20000,
+    "stock": 40,
+    "category": "retablos"
+  },
+  {
+    "name": "Retablo Decorativo 53x38cm",
+    "description": "Retablo decorativo personalizado de alta calidad, un formato grande para un mayor impacto visual.",
+    "price": 30000,
+    "stock": 30,
+    "category": "retablos"
+  },
+  {
+    "name": "Retablo Decorativo 70x50cm",
+    "description": "Retablo decorativo personalizado de alta calidad, ideal para paisajes y composiciones artísticas.",
+    "price": 60000,
+    "stock": 20,
+    "category": "retablos"
+  },
+  {
+    "name": "Retablo Decorativo 70x100cm",
+    "description": "Retablo decorativo personalizado de alta calidad, el tamaño más grande para obras maestras.",
+    "price": 120000,
+    "stock": 15,
+    "category": "retablos"
+  }
+]
