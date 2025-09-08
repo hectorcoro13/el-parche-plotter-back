@@ -27,7 +27,7 @@ export const getAuth0Config = (auth0Service: Auth0Service) => {
     routes: {
       login: '/login',
       callback: '/callback',
-      postLogoutRedirect: 'https://v0-e-commerce-store-build-lemon.vercel.app/',
+      postLogoutRedirect: 'https://www.elparcheplotter.studio/',
     },
 
     afterCallback: async (req, res, session) => {
