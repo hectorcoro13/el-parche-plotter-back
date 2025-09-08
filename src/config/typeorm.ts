@@ -7,7 +7,7 @@ const config = {
   type: 'postgres',
   url: process.env.DB_URL,
   autoLoadEntities: true,
-  synchronize: true,
+  synchronize: false,
   dropSchema: false,
   logging: false,
   ssl: {
