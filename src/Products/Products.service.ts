@@ -62,7 +62,7 @@ export class ProductsService implements OnApplicationBootstrap {
     return 'Products Added';
   }
 
-  async getProducts(page: number = 1, limit: number = 6) {
+  async getProducts(page: number = 1, limit: number = 100) {
     const allProducts: Products[] = await this.ProductsRepository.find({
       relations: {
         category: true,

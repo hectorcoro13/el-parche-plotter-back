@@ -14,7 +14,7 @@ export class UsersService {
     @InjectRepository(Users)
     private readonly usersRepository: Repository<Users>,
   ) {}
-  async getUsers(page: number = 1, limit: number = 5) {
+  async getUsers(page: number = 1, limit: number = 100) {
     let users = await this.usersRepository.find();
 
     const start = (page - 1) * limit;
