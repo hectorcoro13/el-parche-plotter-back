@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Bienvenido a El Parche Plotter!</title>
+    <style>
+        body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 0; background-color: #111827; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #030712; border: 1px solid #dc262630; border-radius: 8px; overflow: hidden; }
+        .header { padding: 40px; text-align: center; background-color: #111827; }
+        .header h1 { color: #ffffff; font-family: 'Cinzel', serif; font-size: 28px; margin: 0; }
+        .content { padding: 30px 40px; color: #d1d5db; line-height: 1.6; }
+        .content h2 { color: #ffffff; font-size: 22px; margin-top: 0; }
+        .content p { margin-bottom: 20px; }
+        .button-container { text-align: center; margin-top: 30px; }
+        .button { background-color: #dc2626; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .footer { background-color: #111827; color: #9ca3af; text-align: center; padding: 20px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>EL PARCHE PLOTTER</h1>
+        </div>
+        <div class="content">
+            <h2>¡Hola, {{ name }}!</h2>
+            <p>Te damos la bienvenida a la comunidad de El Parche Plotter. Estamos increíblemente emocionados de tenerte con nosotros y ayudarte a transformar tus ideas en arte tangible.</p>
+            <p>Ya puedes explorar nuestra colección de productos únicos y empezar a personalizar tu mundo.</p>
+            <div class="button-container">
+                <a href="https://v0-e-commerce-store-build-lemon.vercel.app/productos" class="button">Ver Productos</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 El Parche Plotter. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>

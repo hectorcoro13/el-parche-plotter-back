@@ -42,12 +42,10 @@ export class AuthService {
     await this.mailerService.sendMail({
       to: newUser.email,
       subject: '¡Bienvenido a El Parche Plotter!',
-      html: `
-        <h1>¡Hola, ${newUser.name}!</h1>
-        <p>Te damos la bienvenida a El Parche Plotter. Estamos emocionados de tenerte con nosotros.</p>
-        <p>Ahora puedes explorar nuestros productos, realizar compras y personalizar tu arte.</p>
-        <p>¡Gracias por unirte a nuestra comunidad!</p>
-      `,
+      template: './welcome', // <-- Usa el nombre del archivo sin .hbs
+      context: {
+        name: newUser.name, // <-- Pasa la variable 'name' a la plantilla
+      },
     });
 
     const payload = {

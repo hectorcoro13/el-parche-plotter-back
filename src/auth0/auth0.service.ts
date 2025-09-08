@@ -51,7 +51,10 @@ export class Auth0Service {
         await this.mailerService.sendMail({
           to: user.email,
           subject: '¡Bienvenido a El Parche Plotter!',
-          html: `<h1>¡Hola, ${user.name}!</h1><p>Te damos la bienvenida a nuestra comunidad. Tu cuenta ha sido creada a través de Google.</p>`,
+          template: './welcome', // <-- Usa el nombre del archivo sin .hbs
+          context: {
+            name: user.name, // <-- Pasa la variable 'name' a la plantilla
+          },
         });
       }
 
