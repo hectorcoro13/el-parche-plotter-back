@@ -18,8 +18,9 @@ export const getAuth0Config = (auth0Service: Auth0Service) => {
     session: {
       cookie: {
         secure: isProduction,
-        httpOnly: true,
+
         sameSite: isProduction ? 'None' : 'Lax',
+        httpOnly: true,
       },
     },
 
