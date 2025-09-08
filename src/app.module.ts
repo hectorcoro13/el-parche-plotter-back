@@ -16,6 +16,8 @@ import { CartModule } from './cart/cart.module';
 import { Auth0Module } from './auth0/auth0.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ProductsService } from './Products/Products.service';
+import { CategoriesService } from './categories/categories.service';
 
 @Module({
   imports: [
@@ -46,6 +48,6 @@ import { AppService } from './app.service';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ProductsService, CategoriesService],
 })
 export class AppModule {}

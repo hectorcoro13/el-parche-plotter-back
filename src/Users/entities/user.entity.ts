@@ -44,6 +44,9 @@ export class Users {
   })
   phone: number;
 
+  @Column({ type: 'boolean', default: false, name: 'is_profile_complete' })
+  isProfileComplete: boolean;
+
   @Column({
     type: 'varchar',
     length: 50,

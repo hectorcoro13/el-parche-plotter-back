@@ -40,8 +40,15 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
-    const updatedUser = Object.assign(user, updateUserDto);
+    const updatedUser = this.usersRepository.merge(user, updateUserDto);
+    if (
+      !updatedUser.isProfileComplete &&
+      updatedUser.address &&
+      updatedUser.phone &&
+      updatedUser.city
+    ) {
+      updatedUser.isProfileComplete = true;
+    }
 
     return this.usersRepository.save(updatedUser);
   }

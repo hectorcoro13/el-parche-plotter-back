@@ -36,6 +36,8 @@ export class AuthService {
     const createUser: Users = this.usersRepository.create({
       ...userWithoutPassword,
       password: hasedPassword,
+
+      isProfileComplete: true,
     });
     const newUser = await this.usersRepository.save(createUser);
 
