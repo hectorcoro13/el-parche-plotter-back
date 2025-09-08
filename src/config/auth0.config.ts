@@ -5,6 +5,15 @@ dotenvConfig({ path: '.development.env' });
 
 export const getAuth0Config = (auth0Service: Auth0Service) => {
   const isProduction = process.env.NODE_ENV === 'production';
+
+  console.log('--- Auth0 Config Initializing ---');
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  console.log('AUTH0_BASE_URL:', process.env.AUTH0_BASE_URL);
+  console.log('AUTH0_CLIENT_ID (presente):', !!process.env.AUTH0_CLIENT_ID);
+  console.log('AUTH0_ISSUER_BASE_URL:', process.env.AUTH0_ISSUER_BASE_URL);
+  // No mostramos el secret completo por seguridad, solo si existe.
+  console.log('AUTH0_SECRET (presente):', !!process.env.AUTH0_SECRET);
+  console.log('---------------------------------');
   return {
     authRequired: false,
     auth0Logout: true,
@@ -31,9 +40,12 @@ export const getAuth0Config = (auth0Service: Auth0Service) => {
     },
 
     afterCallback: async (req, res, session) => {
+      console.log('\n--- [Auth0] AFTERCALLBACK INICIADO ---');
       try {
+        console.log('1. ¿La sesión de OIDC existe?', !!session);
         const ISSUER_BASE_URL = process.env.AUTH0_ISSUER_BASE_URL;
         let userPayload = session?.user ?? req?.oidc?.user ?? null;
+        console.log('3. ¿Se encontró un userPayload inicial?', !!userPayload);
 
         if (!userPayload && session?.access_token) {
           try {
@@ -54,6 +66,7 @@ export const getAuth0Config = (auth0Service: Auth0Service) => {
         if (userPayload) {
           await auth0Service.processAuth0User(userPayload);
         }
+        console.log('--- [Auth0] AFTERCALLBACK FINALIZADO CON ÉXITO ---');
 
         return session;
       } catch (error) {
