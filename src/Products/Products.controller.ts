@@ -47,6 +47,13 @@ export class ProductsController {
     }
     return this.ProductsService.getProducts();
   }
+
+  @HttpCode(200)
+  @Get('destacados')
+  getFeaturedProducts() {
+    return this.ProductsService.getFeaturedProducts();
+  }
+
   @Post()
   @ApiBearerAuth()
   @Roles(role.Admin)

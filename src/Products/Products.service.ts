@@ -73,6 +73,26 @@ export class ProductsService implements OnApplicationBootstrap {
     const end = start + limit;
     return allProducts.slice(start, end);
   }
+
+  async getFeaturedProducts(): Promise<Products[]> {
+    const allProducts = await this.ProductsRepository.find({
+      order: { name: 'ASC' }, // O cualquier otro campo para un orden consistente
+    });
+
+    if (allProducts.length <= 3) {
+      return allProducts;
+    }
+
+    const first = allProducts[0];
+    const middleIndex = Math.floor((allProducts.length - 1) / 2);
+    const middle = allProducts[middleIndex];
+    const last = allProducts[allProducts.length - 1];
+
+    // Nos aseguramos de no devolver duplicados si los índices coinciden
+    const featured = [first, middle, last];
+    return [...new Set(featured)];
+  }
+
   async create(createProductDto: CreateProductDto) {
     const category = await this.CategoriesRepository.findOneBy({
       id: createProductDto.categoryId,
