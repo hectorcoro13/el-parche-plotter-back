@@ -19,6 +19,7 @@ RUN npm run build
 FROM base AS production
 COPY --from=dependencies /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/src/mail/templates ./dist/mail/templates
 
 # El puerto que tu app NestJS escucha internamente
 EXPOSE 3001
