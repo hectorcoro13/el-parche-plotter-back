@@ -1,32 +1,27 @@
-# ---- Fase de Construcción (Builder) ----
-# Usamos una imagen completa de Node.js para instalar dependencias y construir el proyecto.
-FROM node:18-alpine AS builder
+# ---- Base Stage ----
+FROM node:20-alpine AS base
 WORKDIR /usr/src/app
-
-# Copiamos los archivos de dependencias e instalamos
 COPY package*.json ./
-RUN npm install
 
-# Copiamos todo el código fuente
+# ---- Dependencies Stage ----
+FROM base AS dependencies
+RUN npm install --only=production
 COPY . .
 
-# Construimos la aplicación para producción
+# ---- Build Stage ----
+FROM base AS build
+RUN npm install
+COPY . .
+# Asegúrate de que tu comando de build esté correcto en package.json
 RUN npm run build
 
-# ---- Fase Final (Runner) ----
-# Usamos una imagen más ligera solo para ejecutar la aplicación ya construida.
-FROM node:18-alpine
-WORKDIR /usr/src/app
+# ---- Production Stage ----
+FROM base AS production
+COPY --from=dependencies /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/dist ./dist
 
-# Copiamos las dependencias de producción
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app/package*.json ./
-
-# Copiamos la aplicación construida (la carpeta 'dist')
-COPY --from=builder /usr/src/app/dist ./dist
-
-# Exponemos el puerto en el que corre nuestra app de NestJS (definido en main.ts)
+# El puerto que tu app NestJS escucha internamente
 EXPOSE 3001
 
-# El comando para iniciar la aplicación en producción
+# Comando para iniciar la aplicación
 CMD ["node", "dist/main"]

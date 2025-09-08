@@ -15,6 +15,7 @@ async function bootstrap() {
       'http://localhost:3001',
       'http://localhost:3000',
       'https://v0-e-commerce-store-build-lemon.vercel.app',
+      'https://www.elparcheplotter.studio',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
@@ -48,6 +49,6 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(process.env.PORT ?? 3001);
+  await app.listen(process.env.PORT ?? 3001, '0.0.0.0');
 }
 bootstrap();
