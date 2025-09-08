@@ -7,12 +7,14 @@ import { Auth0Controller } from './auth0.controller';
 import { Auth0Service } from './auth0.service';
 import { usersModule } from '../Users/users.module';
 import { Users } from '../Users/entities/user.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     usersModule,
     TypeOrmModule.forFeature([Users]),
     PassportModule,
+    MailModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
