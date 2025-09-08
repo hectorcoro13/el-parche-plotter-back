@@ -9,9 +9,7 @@ export class AppController {
   @Get()
   handleRoot(@Req() req: Request, @Res() res: Response) {
     if (req.oidc && req.oidc.isAuthenticated()) {
-      res.redirect(
-        'https://v0-e-commerce-store-build-lemon.vercel.app/callback',
-      );
+      res.redirect('https://www.elparcheplotter.studio/callback');
     } else {
       res.send(this.appService.getHello());
     }
