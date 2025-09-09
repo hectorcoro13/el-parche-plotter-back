@@ -24,19 +24,18 @@ export class AppController {
   @Get('sitemap.xml')
   @Header('Content-Type', 'application/xml')
   async getSitemap(@Res() res: Response) {
-    const hostname = 'https://elparcheplotter.studio';
+    // ¡IMPORTANTE! El hostname debe ser el de tu frontend.
+    const hostname = 'https://www.elparcheplotter.studio';
     const smStream = new SitemapStream({ hostname });
 
     try {
-      // Conectamos el generador de sitemap directamente a la respuesta.
-      // Esto asegura que el formato XML se transmita correctamente.
-      smStream.pipe(res);
+      smStream.pipe(res); // Conectamos el generador XML a la respuesta
 
-      // 1. Añadir URLs estáticas
+      // URLs estáticas
       smStream.write({ url: '/', changefreq: 'daily', priority: 1.0 });
       smStream.write({ url: '/productos', changefreq: 'daily', priority: 0.9 });
 
-      // 2. Añadir URLs de Categorías
+      // URLs de Categorías
       const categories = await this.categoriesService.findAll();
       categories.forEach((category) => {
         smStream.write({
@@ -46,7 +45,7 @@ export class AppController {
         });
       });
 
-      // 3. Añadir URLs de Productos
+      // URLs de Productos
       const products = await this.productsService.getProducts();
       products.forEach((product) => {
         smStream.write({
@@ -56,11 +55,9 @@ export class AppController {
         });
       });
 
-      // Finalizamos el stream. ¡Importante!
-      smStream.end();
+      smStream.end(); // Finalizamos el stream
     } catch (error) {
       console.error('Error al generar el sitemap:', error);
-      // En caso de un error, nos aseguramos de no dejar la conexión abierta.
       if (!res.headersSent) {
         res.status(500).end();
       }
