@@ -11,12 +11,7 @@ export class MercadoPagoService {
     accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
   });
 
-  async createPreference(items: any[]) {
-    console.log('\n--- [MercadoPago] Creando Preferencia de Pago ---');
-    console.log(
-      '1. Items recibidos para la preferencia:',
-      JSON.stringify(items, null, 2),
-    );
+  async createPreference(items: any[], user: any) {
     try {
       const preferenceBody = {
         items: items.map((item) => ({
@@ -26,6 +21,12 @@ export class MercadoPagoService {
           unit_price: Number(item.unit_price),
           currency_id: 'COP',
         })),
+        // --- AÑADE ESTE BLOQUE 'payer' ---
+        payer: {
+          email: user.email,
+          name: user.name,
+        },
+        // --- FIN DEL BLOQUE AÑADIDO ---
         back_urls: {
           success: 'https://elparcheplotter.studio/perfil',
           failure: 'https://elparcheplotter.studio/carrito',
@@ -34,25 +35,18 @@ export class MercadoPagoService {
         auto_return: 'approved',
         notification_url: `${process.env.BACKEND_URL}/mercadopago/webhook`,
       };
-      console.log(
-        '2. Cuerpo de la preferencia enviado a MercadoPago:',
-        JSON.stringify(preferenceBody, null, 2),
-      );
 
       const preference = new Preference(this.client);
       const result = await preference.create({ body: preferenceBody });
-      console.log('3. Preferencia creada con éxito. ID:', result.id);
-      console.log('---------------------------------------------------\n');
       return result.id;
     } catch (error) {
       console.error('Error creating preference in MercadoPago:', error);
-      // Aseguramos que el error sea claro si algo falla.
       throw new BadRequestException(
         'No se pudo crear la preferencia de pago con MercadoPago.',
       );
     }
   }
-  // ... el resto de los métodos (processPayment, handlePaymentNotification) permanecen igual ...
+
   async processPayment(paymentData: any) {
     console.log('\n--- [MercadoPago] Procesando Pago ---');
     console.log('1. Datos del pago recibidos del frontend (parcial):', {
