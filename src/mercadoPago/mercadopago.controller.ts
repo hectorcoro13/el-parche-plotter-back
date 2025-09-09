@@ -8,7 +8,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { MercadoPagoService } from './mercadopago.service';
-import { AuthGuard } from '@nestjs/passport/dist/auth.guard';
+import { AuthGuard } from 'src/Auth/Auth.guard';
 
 @Controller('mercadopago')
 export class MercadoPagoController {
@@ -25,7 +25,6 @@ export class MercadoPagoController {
     return { preferenceId };
   }
   @Post('process-payment')
-  @UseGuards(AuthGuard)
   async processPayment(@Body() paymentData: any) {
     return this.mercadoPagoService.processPayment(paymentData);
   }
