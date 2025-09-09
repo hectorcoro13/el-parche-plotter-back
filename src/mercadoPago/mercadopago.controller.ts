@@ -15,7 +15,7 @@ export class MercadoPagoController {
   constructor(private readonly mercadoPagoService: MercadoPagoService) {}
 
   @Post('create-preference')
-  @UseGuards(AuthGuard) // <-- 3. AÑADE EL GUARDIA DE AUTENTICACIÓN
+  @UseGuards(AuthGuard)
   async createPreference(@Req() req, @Body() body: { items: any[] }) {
     const user = req.user;
     const preferenceId = await this.mercadoPagoService.createPreference(
