@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { CartService } from './cart.services';
 import { AuthGuard } from 'src/Auth/Auth.guard';
-import { AddToCartDto } from './dto/car.dto';
+import { AddToCartDto, SyncCartDto } from './dto/car.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('cart')
@@ -58,5 +58,10 @@ export class CartController {
   ) {
     const userId = req.user.id;
     return this.cartService.removeItemFromCart(userId, productId);
+  }
+  @Post('sync')
+  syncCart(@Req() req, @Body() syncCartDto: SyncCartDto) {
+    const userId = req.user.id;
+    return this.cartService.syncCart(userId, syncCartDto.items);
   }
 }

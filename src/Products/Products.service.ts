@@ -76,6 +76,9 @@ export class ProductsService implements OnApplicationBootstrap {
 
   async getFeaturedProducts(): Promise<Products[]> {
     const allProducts = await this.ProductsRepository.find({
+      relations: {
+        category: true, // <-- AÑADE ESTA LÍNEA
+      },
       order: { name: 'ASC' }, // O cualquier otro campo para un orden consistente
     });
 

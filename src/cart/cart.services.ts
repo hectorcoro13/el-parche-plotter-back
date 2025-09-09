@@ -111,4 +111,27 @@ export class CartService {
     cart.items = [];
     return this.cartRepository.save(cart);
   }
+  async syncCart(userId: string, items: any[]): Promise<Cart> {
+    const cart = await this.findOrCreateCart(userId);
+
+    // Validamos que los productos existan y tengan stock
+    const validatedItems = [];
+    for (const item of items) {
+      const product = await this.productsRepository.findOneBy({
+        id: item.productId,
+      });
+      if (product && product.stock >= item.quantity) {
+        validatedItems.push({
+          productId: item.productId,
+          quantity: item.quantity,
+          name: product.name,
+          price: Number(product.price),
+          imgUrl: product.imgUrl || 'No image',
+        });
+      }
+    }
+
+    cart.items = validatedItems;
+    return this.cartRepository.save(cart);
+  }
 }

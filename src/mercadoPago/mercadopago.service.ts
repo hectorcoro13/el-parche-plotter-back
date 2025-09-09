@@ -18,9 +18,15 @@ export class MercadoPagoService {
           id: item.id,
           title: item.title,
           quantity: item.quantity,
-          unit_price: Number(item.unit_price), // Usamos unit_price
+          unit_price: Number(item.unit_price),
           currency_id: 'COP',
         })),
+        back_urls: {
+          success: 'https://elparcheplotter.studio/perfil',
+          failure: 'https://elparcheplotter.studio/carrito',
+          pending: 'https://elparcheplotter.studio/perfil',
+        },
+        auto_return: 'approved',
         notification_url: `${process.env.BACKEND_URL}/mercadopago/webhook`,
       };
 
