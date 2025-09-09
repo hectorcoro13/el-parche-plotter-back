@@ -55,6 +55,22 @@ export class Users {
   country: string;
 
   @Column({
+    type: 'varchar',
+    length: 10,
+    nullable: true,
+    name: 'identification_type',
+  })
+  identificationType: string;
+
+  @Column({
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+    name: 'identification_number',
+  })
+  identificationNumber: string;
+
+  @Column({
     type: 'text',
     nullable: true,
   })

@@ -1,18 +1,33 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
 import { MailerService } from '@nestjs-modules/mailer';
+import { Repository } from 'typeorm/repository/Repository';
+import { Users } from 'src/Users/entities/user.entity';
+import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
 
 @Injectable()
 export class MercadoPagoService {
-  constructor(private readonly mailService: MailerService) {}
+  constructor(
+    private readonly mailService: MailerService,
+    @InjectRepository(Users)
+    private readonly usersRepository: Repository<Users>,
+  ) {}
 
-  // 2. Crea una instancia del cliente con tu Access Token
   private readonly client = new MercadoPagoConfig({
     accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
   });
 
   async createPreference(items: any[], user: any) {
     try {
+      const fullUser = await this.usersRepository.findOneBy({ id: user.id });
+      if (!fullUser) {
+        throw new NotFoundException('Usuario para el pago no encontrado.');
+      }
+
       const preferenceBody = {
         items: items.map((item) => ({
           id: item.id,
@@ -21,12 +36,24 @@ export class MercadoPagoService {
           unit_price: Number(item.unit_price),
           currency_id: 'COP',
         })),
-        // --- AÑADE ESTE BLOQUE 'payer' ---
         payer: {
-          email: user.email,
-          name: user.name,
+          name: fullUser.name,
+          surname: '',
+          email: fullUser.email,
+          phone: {
+            area_code: '57', // Código de área para Colombia
+            number: String(fullUser.phone),
+          },
+          identification: {
+            type: 'CC', // O el tipo que tengas guardado (CC, CE, etc.)
+            number: '1004898495', // **IMPORTANTE**: Este es un valor de prueba. Debes usar el número real del usuario: String(fullUser.identificationNumber)
+          },
+          address: {
+            street_name: fullUser.address,
+            street_number: '123', // Opcional, puedes omitirlo si no lo tienes
+            zip_code: '110111', // Opcional, puedes omitirlo
+          },
         },
-        // --- FIN DEL BLOQUE AÑADIDO ---
         back_urls: {
           success: 'https://elparcheplotter.studio/perfil',
           failure: 'https://elparcheplotter.studio/carrito',
