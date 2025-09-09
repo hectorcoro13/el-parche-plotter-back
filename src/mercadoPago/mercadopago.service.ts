@@ -12,6 +12,11 @@ export class MercadoPagoService {
   });
 
   async createPreference(items: any[]) {
+    console.log('\n--- [MercadoPago] Creando Preferencia de Pago ---');
+    console.log(
+      '1. Items recibidos para la preferencia:',
+      JSON.stringify(items, null, 2),
+    );
     try {
       const preferenceBody = {
         items: items.map((item) => ({
@@ -29,9 +34,15 @@ export class MercadoPagoService {
         auto_return: 'approved',
         notification_url: `${process.env.BACKEND_URL}/mercadopago/webhook`,
       };
+      console.log(
+        '2. Cuerpo de la preferencia enviado a MercadoPago:',
+        JSON.stringify(preferenceBody, null, 2),
+      );
 
       const preference = new Preference(this.client);
       const result = await preference.create({ body: preferenceBody });
+      console.log('3. Preferencia creada con éxito. ID:', result.id);
+      console.log('---------------------------------------------------\n');
       return result.id;
     } catch (error) {
       console.error('Error creating preference in MercadoPago:', error);
@@ -43,6 +54,16 @@ export class MercadoPagoService {
   }
   // ... el resto de los métodos (processPayment, handlePaymentNotification) permanecen igual ...
   async processPayment(paymentData: any) {
+    console.log('\n--- [MercadoPago] Procesando Pago ---');
+    console.log('1. Datos del pago recibidos del frontend (parcial):', {
+      transaction_amount: paymentData.transaction_amount,
+      token_presente: !!paymentData.token,
+      description: paymentData.description,
+      installments: paymentData.installments,
+      payment_method_id: paymentData.payment_method_id,
+      payer_email: paymentData.payer?.email,
+    });
+
     try {
       const paymentClient = new Payment(this.client);
       const idempotencyKey = Math.random().toString(36).substring(7);
@@ -62,8 +83,21 @@ export class MercadoPagoService {
           idempotencyKey: idempotencyKey,
         },
       });
+      console.log(
+        '2. Respuesta de MercadoPago al procesar el pago:',
+        JSON.stringify(result, null, 2),
+      );
+      console.log('-------------------------------------------\n');
+
       return result;
     } catch (error) {
+      console.error('--- [MercadoPago] ERROR al procesar el pago ---');
+      // El objeto 'error.cause' a menudo contiene la respuesta JSON completa de la API de MercadoPago
+      console.error(
+        'Causa del Error (Respuesta de MP):',
+        JSON.stringify(error.cause, null, 2),
+      );
+      console.error('-------------------------------------------\n');
       console.error('Error processing payment:', error.cause ?? error.message);
       throw new BadRequestException('El pago no pudo ser procesado.');
     }
