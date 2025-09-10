@@ -41,11 +41,16 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     const updatedUser = this.usersRepository.merge(user, updateUserDto);
+
+    // --- LÓGICA CORREGIDA AQUÍ ---
+    // Ahora también comprobamos que los campos de identificación existan.
     if (
       !updatedUser.isProfileComplete &&
       updatedUser.address &&
       updatedUser.phone &&
-      updatedUser.city
+      updatedUser.city &&
+      updatedUser.identificationType && // <-- Campo añadido a la condición
+      updatedUser.identificationNumber // <-- Campo añadido a la condición
     ) {
       updatedUser.isProfileComplete = true;
     }
