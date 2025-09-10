@@ -28,4 +28,12 @@ export class UpdateUserDto {
   @MinLength(5)
   @MaxLength(20)
   city?: string;
+
+  @IsOptional()
+  @IsString()
+  identificationType?: string;
+
+  @IsOptional()
+  @IsString()
+  identificationNumber?: string;
 }
