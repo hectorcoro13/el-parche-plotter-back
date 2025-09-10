@@ -40,22 +40,21 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const updatedUser = this.usersRepository.merge(user, updateUserDto);
 
-    // --- LÓGICA CORREGIDA AQUÍ ---
-    // Ahora también comprobamos que los campos de identificación existan.
+    Object.assign(user, updateUserDto);
+
     if (
-      !updatedUser.isProfileComplete &&
-      updatedUser.address &&
-      updatedUser.phone &&
-      updatedUser.city &&
-      updatedUser.identificationType && // <-- Campo añadido a la condición
-      updatedUser.identificationNumber // <-- Campo añadido a la condición
+      !user.isProfileComplete &&
+      user.address &&
+      user.phone &&
+      user.city &&
+      user.identificationType &&
+      user.identificationNumber
     ) {
-      updatedUser.isProfileComplete = true;
+      user.isProfileComplete = true;
     }
 
-    return this.usersRepository.save(updatedUser);
+    return this.usersRepository.save(user);
   }
   async blockUser(id: string, adminId: string) {
     // <-- 1. Acepta el ID del admin
