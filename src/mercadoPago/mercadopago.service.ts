@@ -63,12 +63,6 @@ export class MercadoPagoService {
         notification_url: `${process.env.BACKEND_URL}/mercadopago/webhook`,
       };
 
-      // AÑADIMOS ESTE LOG PARA VER LA PREFERENCIA ANTES DE ENVIAR
-      console.log(
-        'Cuerpo de la preferencia enviado a Mercado Pago:',
-        JSON.stringify(preferenceBody, null, 2),
-      );
-
       const preference = new Preference(this.client);
       const result = await preference.create({ body: preferenceBody });
       return result.id;
