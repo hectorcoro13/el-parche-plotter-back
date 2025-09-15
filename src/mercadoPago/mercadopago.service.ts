@@ -61,7 +61,6 @@ export class MercadoPagoService {
         notification_url: `${process.env.BACKEND_URL}/mercadopago/webhook`,
       };
 
-      // LOG #1: VER LO QUE ESTAMOS ENVIANDO A MERCADO PAGO
       console.log('--- Creando Preferencia con el siguiente cuerpo: ---');
       console.log(JSON.stringify(preferenceBody, null, 2));
 
@@ -69,13 +68,17 @@ export class MercadoPagoService {
       const result = await preference.create({ body: preferenceBody });
       return result.id;
     } catch (error) {
-      // LOG #2: ¡EL MÁS IMPORTANTE! CAPTURAR LA CAUSA DEL ERROR DE LA API
       console.error('--- ¡ERROR AL CREAR LA PREFERENCIA EN MERCADOPAGO! ---');
-      // El objeto 'error.cause' contiene la respuesta detallada de la API de Mercado Pago
+
+      // LOG #1: Muestra la causa detallada si existe (lo que ya teníamos)
       console.error(
-        'Causa detallada del error:',
+        'Causa detallada del error (error.cause):',
         JSON.stringify(error.cause, null, 2),
       );
+
+      // --- NUEVO LOG AÑADIDO ---
+      // LOG #2: Muestra el objeto de error COMPLETO y RAW. Si hay algo más, saldrá aquí.
+      console.error('Objeto de error COMPLETO capturado:', error);
 
       throw new BadRequestException(
         'No se pudo crear la preferencia de pago con MercadoPago.',
