@@ -24,10 +24,6 @@ export class MercadoPagoController {
     );
     return { preferenceId };
   }
-  @Post('process-payment')
-  async processPayment(@Body() paymentData: any) {
-    return this.mercadoPagoService.processPayment(paymentData);
-  }
 
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
