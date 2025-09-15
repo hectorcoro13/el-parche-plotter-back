@@ -31,9 +31,9 @@ export class MercadoPagoService {
       const preferenceBody = {
         items: items.map((item) => ({
           id: item.id,
-          title: item.title,
+          title: item.name,
           quantity: item.quantity,
-          unit_price: Number(item.unit_price),
+          unit_price: Number(item.price),
           currency_id: 'COP',
         })),
         payer: {
@@ -45,13 +45,11 @@ export class MercadoPagoService {
             number: String(fullUser.phone),
           },
           identification: {
-            type: 'CC', // O el tipo que tengas guardado (CC, CE, etc.)
-            number: '1004898495', // **IMPORTANTE**: Este es un valor de prueba. Debes usar el número real del usuario: String(fullUser.identificationNumber)
+            type: fullUser.identificationType, // Usando el tipo de documento real
+            number: String(fullUser.identificationNumber), // Usando el número de documento real
           },
           address: {
-            street_name: fullUser.address,
-            street_number: '123', // Opcional, puedes omitirlo si no lo tienes
-            zip_code: '110111', // Opcional, puedes omitirlo
+            street_name: fullUser.address, // Usando la dirección real
           },
         },
         back_urls: {
@@ -74,6 +72,7 @@ export class MercadoPagoService {
     }
   }
 
+  // Las otras funciones del servicio (processPayment, handlePaymentNotification) se mantienen igual
   async processPayment(paymentData: any) {
     console.log('\n--- [MercadoPago] Procesando Pago ---');
     console.log('1. Datos del pago recibidos del frontend (parcial):', {
@@ -113,7 +112,6 @@ export class MercadoPagoService {
       return result;
     } catch (error) {
       console.error('--- [MercadoPago] ERROR al procesar el pago ---');
-      // El objeto 'error.cause' a menudo contiene la respuesta JSON completa de la API de MercadoPago
       console.error(
         'Causa del Error (Respuesta de MP):',
         JSON.stringify(error.cause, null, 2),
