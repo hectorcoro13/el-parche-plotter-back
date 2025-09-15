@@ -61,67 +61,25 @@ export class MercadoPagoService {
         notification_url: `${process.env.BACKEND_URL}/mercadopago/webhook`,
       };
 
+      // LOG #1: VER LO QUE ESTAMOS ENVIANDO A MERCADO PAGO
+      console.log('--- Creando Preferencia con el siguiente cuerpo: ---');
+      console.log(JSON.stringify(preferenceBody, null, 2));
+
       const preference = new Preference(this.client);
       const result = await preference.create({ body: preferenceBody });
       return result.id;
     } catch (error) {
-      console.error('Error creating preference in MercadoPago:', error);
+      // LOG #2: ¡EL MÁS IMPORTANTE! CAPTURAR LA CAUSA DEL ERROR DE LA API
+      console.error('--- ¡ERROR AL CREAR LA PREFERENCIA EN MERCADOPAGO! ---');
+      // El objeto 'error.cause' contiene la respuesta detallada de la API de Mercado Pago
+      console.error(
+        'Causa detallada del error:',
+        JSON.stringify(error.cause, null, 2),
+      );
+
       throw new BadRequestException(
         'No se pudo crear la preferencia de pago con MercadoPago.',
       );
-    }
-  }
-
-  // La función processPayment no es necesaria con el Payment Brick
-  // El Payment Brick procesa el pago de forma segura en el frontend
-  // y lo único que se necesita es la creación de la orden en el backend
-  // después de que el pago sea aprobado.
-  async processPayment(paymentData: any) {
-    console.log('\n--- [MercadoPago] Procesando Pago ---');
-    console.log('1. Datos del pago recibidos del frontend (parcial):', {
-      transaction_amount: paymentData.transaction_amount,
-      token_presente: !!paymentData.token,
-      description: paymentData.description,
-      installments: paymentData.installments,
-      payment_method_id: paymentData.payment_method_id,
-      payer_email: paymentData.payer?.email,
-    });
-
-    try {
-      const paymentClient = new Payment(this.client);
-      const idempotencyKey = Math.random().toString(36).substring(7);
-
-      const result = await paymentClient.create({
-        body: {
-          transaction_amount: paymentData.transaction_amount,
-          token: paymentData.token,
-          description: paymentData.description,
-          installments: paymentData.installments,
-          payment_method_id: paymentData.payment_method_id,
-          payer: {
-            email: paymentData.payer.email,
-          },
-        },
-        requestOptions: {
-          idempotencyKey: idempotencyKey,
-        },
-      });
-      console.log(
-        '2. Respuesta de MercadoPago al procesar el pago:',
-        JSON.stringify(result, null, 2),
-      );
-      console.log('-------------------------------------------\n');
-
-      return result;
-    } catch (error) {
-      console.error('--- [MercadoPago] ERROR al procesar el pago ---');
-      console.error(
-        'Causa del Error (Respuesta de MP):',
-        JSON.stringify(error.cause, null, 2),
-      );
-      console.error('-------------------------------------------\n');
-      console.error('Error processing payment:', error.cause ?? error.message);
-      throw new BadRequestException('El pago no pudo ser procesado.');
     }
   }
 
