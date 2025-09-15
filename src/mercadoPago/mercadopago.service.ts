@@ -29,6 +29,8 @@ export class MercadoPagoService {
       }
 
       const preferenceBody = {
+        // --- CAMBIO APLICADO AQUÍ ---
+        // Se mapean los campos 'name' a 'title' y 'price' a 'unit_price'
         items: items.map((item) => ({
           id: item.id,
           title: item.name,
@@ -45,11 +47,11 @@ export class MercadoPagoService {
             number: String(fullUser.phone),
           },
           identification: {
-            type: fullUser.identificationType, // Usando el tipo de documento real
-            number: String(fullUser.identificationNumber), // Usando el número de documento real
+            type: fullUser.identificationType,
+            number: String(fullUser.identificationNumber),
           },
           address: {
-            street_name: fullUser.address, // Usando la dirección real
+            street_name: fullUser.address,
           },
         },
         back_urls: {
