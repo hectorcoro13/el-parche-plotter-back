@@ -61,53 +61,61 @@ export class MercadoPagoService {
         notification_url: `${process.env.BACKEND_URL}/mercadopago/webhook`,
       };
 
-      console.log('--- Creando Preferencia con el siguiente cuerpo: ---');
-      console.log(JSON.stringify(preferenceBody, null, 2));
-
       const preference = new Preference(this.client);
       const result = await preference.create({ body: preferenceBody });
       return result.id;
     } catch (error) {
       console.error('--- ¡ERROR AL CREAR LA PREFERENCIA EN MERCADOPAGO! ---');
-
-      // LOG #1: Muestra la causa detallada si existe (lo que ya teníamos)
       console.error(
         'Causa detallada del error (error.cause):',
         JSON.stringify(error.cause, null, 2),
       );
-
-      // --- NUEVO LOG AÑADIDO ---
-      // LOG #2: Muestra el objeto de error COMPLETO y RAW. Si hay algo más, saldrá aquí.
       console.error('Objeto de error COMPLETO capturado:', error);
-
       throw new BadRequestException(
         'No se pudo crear la preferencia de pago con MercadoPago.',
       );
     }
   }
 
+  // --- FUNCIÓN MEJORADA CON LOGS DETALLADOS ---
   async handlePaymentNotification(paymentId: string) {
+    console.log(
+      `--- [WEBHOOK] Notificación recibida para el ID de pago: ${paymentId} ---`,
+    );
     try {
       const paymentClient = new Payment(this.client);
       const payment = await paymentClient.get({ id: paymentId });
 
-      console.log('Payment details:', payment);
+      // LOG CLAVE: Imprime el objeto de pago COMPLETO que recibimos del webhook.
+      console.log(
+        '--- [WEBHOOK] Objeto de pago completo recibido de Mercado Pago: ---',
+      );
+      console.log(JSON.stringify(payment, null, 2));
+
+      // Aquí buscaremos el motivo del rechazo
+      if (payment.status === 'rejected') {
+        console.error(`--- [WEBHOOK] ¡PAGO RECHAZADO! ---`);
+        console.error(
+          `> Motivo del rechazo (status_detail): ${payment.status_detail}`,
+        );
+      }
 
       if (payment.status === 'approved') {
-        console.log(`Payment ${paymentId} was approved!`);
-
+        console.log(`--- [WEBHOOK] ¡Pago Aprobado! Enviando email...`);
         const userEmail = payment.payer?.email;
         if (userEmail) {
           await this.mailService.sendMail({
             to: userEmail,
-            subject: 'Order Confirmation',
-            html: `<p>Thank you for your order! Your payment with ID ${payment.id} has been approved.</p>`,
-            context: { payment },
+            subject: 'Confirmación de tu pedido en El Parche Plotter',
+            html: `<p>¡Gracias por tu compra! Tu pago con ID ${payment.id} ha sido aprobado.</p>`,
           });
         }
       }
     } catch (error) {
-      console.error('Error handling payment notification:', error);
+      console.error(
+        '--- [WEBHOOK] ERROR al manejar la notificación de pago: ---',
+      );
+      console.error(JSON.stringify(error.cause, null, 2));
     }
   }
 }
