@@ -29,8 +29,6 @@ export class MercadoPagoService {
       }
 
       const preferenceBody = {
-        // --- CAMBIO APLICADO AQUÍ ---
-        // Se mapean los campos 'name' a 'title' y 'price' a 'unit_price'
         items: items.map((item) => ({
           id: item.id,
           title: item.name,
@@ -43,7 +41,7 @@ export class MercadoPagoService {
           surname: '',
           email: fullUser.email,
           phone: {
-            area_code: '57', // Código de área para Colombia
+            area_code: '57',
             number: String(fullUser.phone),
           },
           identification: {
@@ -74,7 +72,10 @@ export class MercadoPagoService {
     }
   }
 
-  // Las otras funciones del servicio (processPayment, handlePaymentNotification) se mantienen igual
+  // La función processPayment no es necesaria con el Payment Brick
+  // El Payment Brick procesa el pago de forma segura en el frontend
+  // y lo único que se necesita es la creación de la orden en el backend
+  // después de que el pago sea aprobado.
   async processPayment(paymentData: any) {
     console.log('\n--- [MercadoPago] Procesando Pago ---');
     console.log('1. Datos del pago recibidos del frontend (parcial):', {
