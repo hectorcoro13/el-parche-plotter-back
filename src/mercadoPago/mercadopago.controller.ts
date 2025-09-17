@@ -33,15 +33,25 @@ export class MercadoPagoController {
   handleWebhook(
     @Body() notification: any,
     @Headers('x-signature') signature: string,
-    @Headers('x-request-id') requestId: string, // <-- AÑADE ESTO
+    @Headers('x-request-id') requestId: string,
   ) {
-    // --- LÓGICA DE VALIDACIÓN CORREGIDA ---
+    console.log(
+      '--- [WEBHOOK] Petición entrante recibida en /mercadopago/webhook ---',
+    );
+    console.log('> Body recibido:', JSON.stringify(notification, null, 2));
+
     if (!signature) {
+      console.error(
+        '--- [WEBHOOK] RECHAZADO: Petición sin header x-signature.',
+      );
       throw new BadRequestException('Firma de Webhook ausente.');
     }
 
     const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
     if (!secret) {
+      console.error(
+        '--- [WEBHOOK] ERROR FATAL: El secreto del webhook no está configurado en .env',
+      );
       throw new Error(
         'El secreto del webhook de MercadoPago no está configurado.',
       );
@@ -59,18 +69,22 @@ export class MercadoPagoController {
       throw new BadRequestException('Formato de firma de Webhook inválido.');
     }
 
-    // CORRECCIÓN: Usamos el requestId del header
     const manifest = `id:${notification.data.id};request-id:${requestId};ts:${timestamp};`;
     const hmac = crypto.createHmac('sha256', secret);
     hmac.update(manifest);
     const calculatedHash = hmac.digest('hex');
 
     if (calculatedHash !== receivedHash) {
+      console.error('--- [WEBHOOK] ¡VALIDACIÓN FALLIDA! La firma no coincide.');
+      console.error(`> Manifest generado: ${manifest}`);
+      console.error(`> Hash calculado: ${calculatedHash}`);
+      console.error(`> Hash recibido: ${receivedHash}`);
       throw new BadRequestException(
         'Firma de Webhook inválida. La notificación podría ser fraudulenta.',
       );
     }
-    // --- FIN DE LA LÓGICA DE VALIDACIÓN CORREGIDA ---
+
+    console.log('--- [WEBHOOK] Firma validada exitosamente. ---');
 
     if (notification.type === 'payment' && notification.data?.id) {
       this.mercadoPagoService.handlePaymentNotification(notification.data.id);
