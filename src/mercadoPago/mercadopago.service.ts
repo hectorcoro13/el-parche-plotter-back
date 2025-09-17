@@ -40,14 +40,25 @@ export class MercadoPagoService {
         throw new NotFoundException('Usuario para el pago no encontrado.');
       }
       const fullName = fullUser.name || '';
+      const nameParts = fullName.split(' ').filter((part) => part);
 
-      // 2. Dividimos el nombre y apellido de forma segura.
-      const nameParts = fullName.split(' ');
-      const name = nameParts.slice(0, 1).join(''); // Solo el primer nombre
-      const lastname = nameParts.slice(1).join(' '); // El resto es el apellido
+      let name = '';
+      let lastname = '';
 
-      // 3. Validamos que tengamos al menos un nombre.
-      if (!fullUser.name) {
+      if (nameParts.length >= 4) {
+        name = nameParts.slice(0, 2).join(' ');
+        lastname = nameParts.slice(2).join(' ');
+      } else if (nameParts.length === 3) {
+        name = nameParts[0];
+        lastname = nameParts.slice(1).join(' ');
+      } else if (nameParts.length === 2) {
+        name = nameParts[0];
+        lastname = nameParts[1];
+      } else {
+        name = nameParts[0] || '';
+      }
+
+      if (!name) {
         console.error(
           '--- [MERCADOPAGO] ERROR: El nombre del usuario está vacío.',
         );
