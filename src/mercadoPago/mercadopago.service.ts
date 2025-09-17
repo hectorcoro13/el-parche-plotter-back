@@ -8,6 +8,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Repository } from 'typeorm/repository/Repository';
 import { Users } from 'src/Users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
+import { UsersService } from 'src/Users/users.service';
 
 @Injectable()
 export class MercadoPagoService {
@@ -15,6 +16,7 @@ export class MercadoPagoService {
     private readonly mailService: MailerService,
     @InjectRepository(Users)
     private readonly usersRepository: Repository<Users>,
+    private readonly usersService: UsersService,
   ) {}
 
   private readonly client = new MercadoPagoConfig({

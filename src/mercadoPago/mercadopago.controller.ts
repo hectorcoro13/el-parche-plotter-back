@@ -33,8 +33,9 @@ export class MercadoPagoController {
   handleWebhook(
     @Body() notification: any,
     @Headers('x-signature') signature: string,
+    @Headers('x-request-id') requestId: string, // <-- AÑADE ESTO
   ) {
-    // --- LÓGICA DE VALIDACIÓN AÑADIDA ---
+    // --- LÓGICA DE VALIDACIÓN CORREGIDA ---
     if (!signature) {
       throw new BadRequestException('Firma de Webhook ausente.');
     }
@@ -46,7 +47,6 @@ export class MercadoPagoController {
       );
     }
 
-    // Separamos el timestamp (ts) y el hash (v1) de la firma
     const parts = signature.split(',');
     const timestamp = parts
       .find((part) => part.startsWith('ts='))
@@ -59,21 +59,19 @@ export class MercadoPagoController {
       throw new BadRequestException('Formato de firma de Webhook inválido.');
     }
 
-    // Creamos la firma que nosotros esperamos
-    const manifest = `id:${notification.data.id};request-id:${notification.id};ts:${timestamp};`;
+    // CORRECCIÓN: Usamos el requestId del header
+    const manifest = `id:${notification.data.id};request-id:${requestId};ts:${timestamp};`;
     const hmac = crypto.createHmac('sha256', secret);
     hmac.update(manifest);
     const calculatedHash = hmac.digest('hex');
 
-    // Comparamos nuestra firma con la que recibimos
     if (calculatedHash !== receivedHash) {
       throw new BadRequestException(
         'Firma de Webhook inválida. La notificación podría ser fraudulenta.',
       );
     }
-    // --- FIN DE LA LÓGICA DE VALIDACIÓN ---
+    // --- FIN DE LA LÓGICA DE VALIDACIÓN CORREGIDA ---
 
-    // Si la firma es válida, procesamos la notificación
     if (notification.type === 'payment' && notification.data?.id) {
       this.mercadoPagoService.handlePaymentNotification(notification.data.id);
     }
