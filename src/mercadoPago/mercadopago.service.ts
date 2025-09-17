@@ -31,7 +31,15 @@ export class MercadoPagoService {
       console.log(
         '--- [MERCADOPAGO] Buscando datos completos del usuario en la BD...',
       );
-      const fullName = user.name || '';
+
+      const fullUser = await this.usersRepository.findOneBy({ id: user.id });
+      if (!fullUser) {
+        console.error(
+          `--- [MERCADOPAGO] ERROR: Usuario con ID ${user.id} no fue encontrado.`,
+        );
+        throw new NotFoundException('Usuario para el pago no encontrado.');
+      }
+      const fullName = fullUser.name || '';
 
       // 2. Dividimos el nombre y apellido de forma segura.
       const nameParts = fullName.split(' ');
@@ -39,20 +47,13 @@ export class MercadoPagoService {
       const lastname = nameParts.slice(1).join(' '); // El resto es el apellido
 
       // 3. Validamos que tengamos al menos un nombre.
-      if (!name) {
+      if (!fullUser.name) {
         console.error(
           '--- [MERCADOPAGO] ERROR: El nombre del usuario está vacío.',
         );
         throw new BadRequestException(
           'El nombre del usuario es requerido para el pago.',
         );
-      }
-      const fullUser = await this.usersRepository.findOneBy({ id: user.id });
-      if (!fullUser) {
-        console.error(
-          `--- [MERCADOPAGO] ERROR: Usuario con ID ${user.id} no fue encontrado.`,
-        );
-        throw new NotFoundException('Usuario para el pago no encontrado.');
       }
 
       // LOG #1: DATOS COMPLETOS DEL USUARIO
