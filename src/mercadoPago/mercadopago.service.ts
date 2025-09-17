@@ -27,14 +27,26 @@ export class MercadoPagoService {
     console.log(`> User ID recibido: ${user.id}`);
     console.log('> Items recibidos:', JSON.stringify(items, null, 2));
 
-    const nameParts = user.name.split(' ');
-    const guessedName = nameParts.slice(0, 2).join(' '); // Tomamos las dos primeras palabras como nombre
-    const guessedLastname = nameParts.slice(2).join(' '); // El resto como apellido
-
     try {
       console.log(
         '--- [MERCADOPAGO] Buscando datos completos del usuario en la BD...',
       );
+      const fullName = user.name || '';
+
+      // 2. Dividimos el nombre y apellido de forma segura.
+      const nameParts = fullName.split(' ');
+      const name = nameParts.slice(0, 1).join(''); // Solo el primer nombre
+      const lastname = nameParts.slice(1).join(' '); // El resto es el apellido
+
+      // 3. Validamos que tengamos al menos un nombre.
+      if (!name) {
+        console.error(
+          '--- [MERCADOPAGO] ERROR: El nombre del usuario está vacío.',
+        );
+        throw new BadRequestException(
+          'El nombre del usuario es requerido para el pago.',
+        );
+      }
       const fullUser = await this.usersRepository.findOneBy({ id: user.id });
       if (!fullUser) {
         console.error(
@@ -76,8 +88,8 @@ export class MercadoPagoService {
           currency_id: 'COP',
         })),
         payer: {
-          name: guessedName,
-          surname: guessedLastname.length > 0 ? guessedLastname : guessedName,
+          name: name,
+          surname: lastname,
           email: fullUser.email,
           phone: {
             area_code: '57',
