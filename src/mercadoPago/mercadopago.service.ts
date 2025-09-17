@@ -211,40 +211,60 @@ export class MercadoPagoService {
     }
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async handleBrickPayment(paymentId: string, orderData: any) {
+  async createPaymentFromBrick(paymentData: any, user: any) {
+    const { formData } = paymentData; // El objeto que nos enviaste en el log
+
     try {
       const paymentClient = new Payment(this.client);
-      const payment = await paymentClient.get({ id: paymentId });
+
+      console.log('--- [BACKEND] Creando pago con los siguientes datos: ---');
+      console.log(JSON.stringify(formData, null, 2));
+
+      const paymentRequestBody = {
+        transaction_amount: formData.transaction_amount,
+        token: formData.token,
+        description: 'Compra en El Parche Plotter', // Puedes personalizar esto
+        installments: formData.installments,
+        payment_method_id: formData.payment_method_id,
+        issuer_id: formData.issuer_id,
+        payer: {
+          email: formData.payer.email,
+          identification: {
+            type: formData.payer.identification.type,
+            number: formData.payer.identification.number,
+          },
+        },
+      };
+
+      const payment = await paymentClient.create({ body: paymentRequestBody });
+
+      console.log('--- [BACKEND] Respuesta de la API de Mercado Pago: ---');
+      console.log(JSON.stringify(payment, null, 2));
 
       if (payment.status === 'approved') {
-        console.log('--- [BRICK] Pago aprobado, procesando orden...');
-
-        // Aquí llamas a la lógica que ya tienes para crear la orden
-        // const order = await this.ordersService.addOrder(orderData.products, orderData.userId);
-        // await this.cartService.clearCart(orderData.userId);
-        // await this.mailService.sendMail(...);
-
-        console.log('--- [BRICK] Orden procesada exitosamente ---');
+        console.log(`--- ¡PAGO APROBADO! ID: ${payment.id} ---`);
+        // --- LÓGICA DE NEGOCIO ---
+        // Aquí es donde creas la orden, limpias el carrito y envías el email
+        // await this.ordersService.addOrder(paymentData.orderData.products, user.id);
+        // await this.cartService.clearCart(user.id);
+        // ... etc.
         return {
           success: true,
-          message: 'Pago procesado y orden creada.',
-          status: payment.status,
+          message: 'Pago aprobado y orden creada.',
           paymentId: payment.id,
         };
       } else {
-        console.error(
-          `--- [BRICK] Pago rechazado o pendiente. Estado: ${payment.status}`,
-        );
+        // El pago fue rechazado por el banco o por el antifraude
         throw new BadRequestException(
-          `El pago fue rechazado. Estado: ${payment.status_detail}`,
+          `El pago fue rechazado. Motivo: ${payment.status_detail}`,
         );
       }
     } catch (error) {
       console.error(
-        '--- [BRICK] Error procesando el pago desde el Brick:',
-        error,
+        '--- [BACKEND] Error al crear el pago:',
+        error.cause || error.message,
       );
-      throw new InternalServerErrorException('Error al procesar el pago.');
+      throw new InternalServerErrorException('No se pudo procesar el pago.');
     }
   }
 }

@@ -94,13 +94,14 @@ export class MercadoPagoController {
   }
   @Post('process-payment')
   @UseGuards(AuthGuard)
-  async processPaymentFromBrick(
-    @Body() body: { paymentId: string; orderData: any },
-  ) {
+  async processPaymentFromBrick(@Req() req, @Body() paymentData: any) {
+    if (!paymentData || !paymentData.formData) {
+      throw new BadRequestException('Datos de pago incompletos o inválidos.');
+    }
+    const user = req.user;
     console.log(
-      `--- [BRICK] Recibido paymentId: ${body.paymentId} para procesar ---`,
+      `--- [BACKEND] Recibidos datos para procesar pago del usuario: ${user.id} ---`,
     );
-    const { paymentId, orderData } = body;
-    return this.mercadoPagoService.handleBrickPayment(paymentId, orderData);
+    return this.mercadoPagoService.createPaymentFromBrick(paymentData, user);
   }
 }
