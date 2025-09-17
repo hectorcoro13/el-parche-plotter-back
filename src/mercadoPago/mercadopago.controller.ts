@@ -92,4 +92,15 @@ export class MercadoPagoController {
 
     return { received: true };
   }
+  @Post('process-payment')
+  @UseGuards(AuthGuard)
+  async processPaymentFromBrick(
+    @Body() body: { paymentId: string; orderData: any },
+  ) {
+    console.log(
+      `--- [BRICK] Recibido paymentId: ${body.paymentId} para procesar ---`,
+    );
+    const { paymentId, orderData } = body;
+    return this.mercadoPagoService.handleBrickPayment(paymentId, orderData);
+  }
 }

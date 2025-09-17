@@ -210,4 +210,41 @@ export class MercadoPagoService {
       );
     }
   }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async handleBrickPayment(paymentId: string, orderData: any) {
+    try {
+      const paymentClient = new Payment(this.client);
+      const payment = await paymentClient.get({ id: paymentId });
+
+      if (payment.status === 'approved') {
+        console.log('--- [BRICK] Pago aprobado, procesando orden...');
+
+        // Aquí llamas a la lógica que ya tienes para crear la orden
+        // const order = await this.ordersService.addOrder(orderData.products, orderData.userId);
+        // await this.cartService.clearCart(orderData.userId);
+        // await this.mailService.sendMail(...);
+
+        console.log('--- [BRICK] Orden procesada exitosamente ---');
+        return {
+          success: true,
+          message: 'Pago procesado y orden creada.',
+          status: payment.status,
+          paymentId: payment.id,
+        };
+      } else {
+        console.error(
+          `--- [BRICK] Pago rechazado o pendiente. Estado: ${payment.status}`,
+        );
+        throw new BadRequestException(
+          `El pago fue rechazado. Estado: ${payment.status_detail}`,
+        );
+      }
+    } catch (error) {
+      console.error(
+        '--- [BRICK] Error procesando el pago desde el Brick:',
+        error,
+      );
+      throw new InternalServerErrorException('Error al procesar el pago.');
+    }
+  }
 }
