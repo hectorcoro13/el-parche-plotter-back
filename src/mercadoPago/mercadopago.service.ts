@@ -27,6 +27,10 @@ export class MercadoPagoService {
     console.log(`> User ID recibido: ${user.id}`);
     console.log('> Items recibidos:', JSON.stringify(items, null, 2));
 
+    const nameParts = user.name.split(' ');
+    const guessedName = nameParts.slice(0, 2).join(' '); // Tomamos las dos primeras palabras como nombre
+    const guessedLastname = nameParts.slice(2).join(' '); // El resto como apellido
+
     try {
       console.log(
         '--- [MERCADOPAGO] Buscando datos completos del usuario en la BD...',
@@ -72,8 +76,8 @@ export class MercadoPagoService {
           currency_id: 'COP',
         })),
         payer: {
-          name: fullUser.name,
-          surname: fullUser.lastname,
+          name: guessedName,
+          surname: guessedLastname.length > 0 ? guessedLastname : guessedName,
           email: fullUser.email,
           phone: {
             area_code: '57',
