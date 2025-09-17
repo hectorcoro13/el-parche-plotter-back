@@ -103,6 +103,9 @@ export class Users {
   })
   isBlocked: boolean;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  lastname: string;
+
   @Column({
     type: 'boolean',
     default: false,

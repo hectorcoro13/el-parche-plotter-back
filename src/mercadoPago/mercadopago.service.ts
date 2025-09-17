@@ -73,7 +73,7 @@ export class MercadoPagoService {
         })),
         payer: {
           name: fullUser.name,
-          surname: '', // OJO: Surname está vacío. Si es requerido para Colombia, esto puede ser el problema.
+          surname: fullUser.lastname,
           email: fullUser.email,
           phone: {
             area_code: '57',
