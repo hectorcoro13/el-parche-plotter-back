@@ -98,8 +98,7 @@ export class MercadoPagoService {
         console.log(
           `--- [WEBHOOK] Pago Aprobado. Procesando orden para pago ID: ${paymentId}`,
         );
-
-        const orderData = { products: [] }; // Simplificación para el webhook
+        const orderData = { products: [] };
         await this.processSuccessfulPayment(
           String(payment.id),
           orderData,
@@ -133,11 +132,14 @@ export class MercadoPagoService {
     const newOrder = newOrderArray[0];
     newOrder.paymentId = paymentId;
     await this.ordersRepository.save(newOrder);
-
     console.log(`> Orden ${newOrder.id} creada y stock actualizado.`);
+
     await this.cartService.clearCart(userId);
     console.log(`> Carrito del usuario ${userId} vaciado.`);
 
+    // --- LA CORRECCIÓN ESTÁ AQUÍ ---
+    // Tu `OrdersService.create` devuelve la orden con `orderDetails` que es un array.
+    // Dentro de cada `orderDetail` hay un array de `products`.
     const orderDetailsForTemplate = newOrder.orderDetails[0].products.map(
       (product) => ({
         name: product.name,
@@ -158,14 +160,14 @@ export class MercadoPagoService {
       const templateData = {
         name: fullUser.name,
         orderId: newOrder.id.split('-')[0].toUpperCase(),
-        date: format(newOrder.date, 'dd/MM/yyyy'), // <-- Corregido
+        date: format(newOrder.date, 'dd/MM/yyyy'),
         paymentId: paymentId,
         products: orderDetailsForTemplate,
         total: totalFormatted,
         year: new Date().getFullYear(),
       };
 
-      const pdfBuffer = await this.pdfService.generateInvoice(templateData); // <-- Corregido
+      const pdfBuffer = await this.pdfService.generateInvoice(templateData);
 
       await this.mailService.sendMail({
         to: fullUser.email,
