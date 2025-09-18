@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { MercadoPagoService } from './mercadopago.service';
 import { AuthGuard } from 'src/Auth/Auth.guard';
-import * as crypto from 'crypto';
 
 @Controller('mercadopago')
 export class MercadoPagoController {
@@ -35,63 +34,25 @@ export class MercadoPagoController {
     @Headers('x-signature') signature: string,
     @Headers('x-request-id') requestId: string,
   ) {
-    console.log(
-      '--- [WEBHOOK] Petición entrante recibida en /mercadopago/webhook ---',
+    const isValid = this.mercadoPagoService.validateWebhookSignature(
+      signature,
+      requestId,
+      notification.data.id,
     );
-    console.log('> Body recibido:', JSON.stringify(notification, null, 2));
-
-    if (!signature) {
-      console.error(
-        '--- [WEBHOOK] RECHAZADO: Petición sin header x-signature.',
-      );
-      throw new BadRequestException('Firma de Webhook ausente.');
+    if (!isValid) {
+      throw new BadRequestException('Firma de Webhook inválida.');
     }
 
-    const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
-    if (!secret) {
-      console.error(
-        '--- [WEBHOOK] ERROR FATAL: El secreto del webhook no está configurado en .env',
+    if (notification.type === 'payment') {
+      console.log(
+        `--- [WEBHOOK] Notificación recibida para el pago: ${notification.data.id}`,
       );
-      throw new Error(
-        'El secreto del webhook de MercadoPago no está configurado.',
-      );
-    }
-
-    const parts = signature.split(',');
-    const timestamp = parts
-      .find((part) => part.startsWith('ts='))
-      ?.split('=')[1];
-    const receivedHash = parts
-      .find((part) => part.startsWith('v1='))
-      ?.split('=')[1];
-
-    if (!timestamp || !receivedHash) {
-      throw new BadRequestException('Formato de firma de Webhook inválido.');
-    }
-
-    const manifest = `id:${notification.data.id};request-id:${requestId};ts:${timestamp};`;
-    const hmac = crypto.createHmac('sha256', secret);
-    hmac.update(manifest);
-    const calculatedHash = hmac.digest('hex');
-
-    if (calculatedHash !== receivedHash) {
-      console.error('--- [WEBHOOK] ¡VALIDACIÓN FALLIDA! La firma no coincide.');
-      console.error(`> Manifest generado: ${manifest}`);
-      console.error(`> Hash calculado: ${calculatedHash}`);
-      console.error(`> Hash recibido: ${receivedHash}`);
-      throw new BadRequestException(
-        'Firma de Webhook inválida. La notificación podría ser fraudulenta.',
-      );
-    }
-
-    console.log('--- [WEBHOOK] Firma validada exitosamente. ---');
-
-    if (notification.type === 'payment' && notification.data?.id) {
       this.mercadoPagoService.handlePaymentNotification(notification.data.id);
     }
 
     return { received: true };
   }
+
   @Post('process-payment')
   @UseGuards(AuthGuard)
   async processPaymentFromBrick(@Req() req, @Body() paymentData: any) {

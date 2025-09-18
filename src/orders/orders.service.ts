@@ -10,7 +10,6 @@ import { Repository } from 'typeorm';
 import { Users } from 'src/Users/entities/user.entity';
 import { OrderDetails } from './entities/orderDetails.entity';
 import { Products } from 'src/Products/entities/products.entity';
-import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class OrdersService {
@@ -23,7 +22,6 @@ export class OrdersService {
     private OrderDetailRepository: Repository<OrderDetails>,
     @InjectRepository(Products)
     private productsRepository: Repository<Products>,
-    private readonly mailerService: MailerService,
   ) {}
 
   async create(createOrderDto: CreateOrderDto) {
@@ -72,17 +70,6 @@ export class OrdersService {
     orderDetail.products = productsArray;
 
     await this.OrderDetailRepository.save(orderDetail);
-
-    await this.mailerService.sendMail({
-      to: user.email,
-      subject: 'Confirmación de tu pedido en El Parche Plotter',
-      html: `
-        <h1>¡Gracias por tu compra, ${user.name}!</h1>
-        <p>Hemos recibido tu pedido con el ID: ${newOrder.id}.</p>
-        <p>Total: <strong>${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(Number(orderDetail.price))}</strong></p>
-        <p>Pronto estaremos procesando tu orden.</p>
-      `,
-    });
 
     return await this.orderRepository.find({
       where: { id: newOrder.id },

@@ -1,14 +1,20 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
-import { MailerService } from '@nestjs-modules/mailer';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Users } from 'src/Users/entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Orders } from 'src/orders/entities/order.entity';
+import { OrdersService } from 'src/orders/orders.service';
+import { CartService } from 'src/cart/cart.services';
+import { MailerService } from '@nestjs-modules/mailer';
+import * as crypto from 'crypto';
+import { CreateOrderDto } from 'src/orders/dto/create-order.dto';
+import { PdfService } from 'src/pdf/pdf.service';
+import { format } from 'date-fns';
 
 @Injectable()
 export class MercadoPagoService {
@@ -16,6 +22,11 @@ export class MercadoPagoService {
     private readonly mailService: MailerService,
     @InjectRepository(Users)
     private readonly usersRepository: Repository<Users>,
+    @InjectRepository(Orders)
+    private readonly ordersRepository: Repository<Orders>,
+    private readonly ordersService: OrdersService,
+    private readonly cartService: CartService,
+    private readonly pdfService: PdfService,
   ) {}
 
   private readonly client = new MercadoPagoConfig({
@@ -23,75 +34,14 @@ export class MercadoPagoService {
   });
 
   async createPreference(items: any[], user: any) {
-    console.log('--- [MERCADOPAGO] INICIANDO LA CREACIÓN DE PREFERENCIA ---');
-    console.log(`> User ID recibido: ${user.id}`);
-    console.log('> Items recibidos:', JSON.stringify(items, null, 2));
+    const fullUser = await this.usersRepository.findOneBy({ id: user.id });
+    if (!fullUser) {
+      throw new NotFoundException('Usuario para el pago no encontrado.');
+    }
 
-    try {
-      console.log(
-        '--- [MERCADOPAGO] Buscando datos completos del usuario en la BD...',
-      );
-
-      const fullUser = await this.usersRepository.findOneBy({ id: user.id });
-      if (!fullUser) {
-        console.error(
-          `--- [MERCADOPAGO] ERROR: Usuario con ID ${user.id} no fue encontrado.`,
-        );
-        throw new NotFoundException('Usuario para el pago no encontrado.');
-      }
-      const fullName = fullUser.name || '';
-      const nameParts = fullName.split(' ').filter((part) => part);
-
-      let name = '';
-      let lastname = '';
-
-      if (nameParts.length >= 4) {
-        name = nameParts.slice(0, 2).join(' ');
-        lastname = nameParts.slice(2).join(' ');
-      } else if (nameParts.length === 3) {
-        name = nameParts[0];
-        lastname = nameParts.slice(1).join(' ');
-      } else if (nameParts.length === 2) {
-        name = nameParts[0];
-        lastname = nameParts[1];
-      } else {
-        name = nameParts[0] || '';
-      }
-
-      if (!name) {
-        console.error(
-          '--- [MERCADOPAGO] ERROR: El nombre del usuario está vacío.',
-        );
-        throw new BadRequestException(
-          'El nombre del usuario es requerido para el pago.',
-        );
-      }
-
-      // LOG #1: DATOS COMPLETOS DEL USUARIO
-      console.log(
-        '--- [MERCADOPAGO] Datos del usuario encontrados en la BD: ---',
-      );
-      console.log(JSON.stringify(fullUser, null, 2));
-
-      // LOG #2: VALIDACIÓN MANUAL DE DATOS CLAVE
-      console.log('--- [MERCADOPAGO] Validando datos del "payer"...');
-      if (
-        !fullUser.name ||
-        !fullUser.email ||
-        !fullUser.phone ||
-        !fullUser.identificationType ||
-        !fullUser.identificationNumber
-      ) {
-        console.error(
-          '--- [MERCADOPAGO] ERROR CRÍTICO: Faltan datos obligatorios del usuario (nombre, email, teléfono, identificación).',
-        );
-        throw new BadRequestException(
-          'Faltan datos del usuario para procesar el pago.',
-        );
-      }
-      console.log('> Todos los datos del "payer" requeridos están presentes.');
-
-      const preferenceBody = {
+    const preference = new Preference(this.client);
+    const result = await preference.create({
+      body: {
         items: items.map((item) => ({
           id: item.id,
           title: item.name,
@@ -99,172 +49,172 @@ export class MercadoPagoService {
           unit_price: Number(item.price),
           currency_id: 'COP',
         })),
-        payer: {
-          name: name,
-          surname: lastname,
-          email: fullUser.email,
-          phone: {
-            area_code: '57',
-            number: String(fullUser.phone),
-          },
-          identification: {
-            type: String(fullUser.identificationType),
-            number: String(fullUser.identificationNumber),
-          },
-          address: {
-            street_name: fullUser.address,
-          },
-        },
+        payer: { email: fullUser.email },
         back_urls: {
           success: 'https://elparcheplotter.studio/perfil',
           failure: 'https://elparcheplotter.studio/carrito',
-          pending: 'https://elparcheplotter.studio/perfil',
         },
-        auto_return: 'approved' as const,
+        auto_return: 'approved',
         notification_url: `${process.env.BACKEND_URL}/mercadopago/webhook`,
-        external_reference: fullUser.id,
-      };
-
-      // LOG #3: CUERPO DE LA PREFERENCIA (EL MÁS IMPORTANTE)
-      console.log(
-        '--- [MERCADOPAGO] Objeto `preferenceBody` que se enviará a Mercado Pago: ---',
-      );
-      console.log(JSON.stringify(preferenceBody, null, 2));
-
-      const preference = new Preference(this.client);
-      console.log(
-        '--- [MERCADOPAGO] Enviando petición a la API de Mercado Pago...',
-      );
-      const result = await preference.create({ body: preferenceBody });
-
-      console.log(
-        `--- [MERCADOPAGO] ¡Preferencia creada exitosamente! Preference ID: ${result.id} ---`,
-      );
-      return result.id;
-    } catch (error) {
-      console.error(
-        '--- [MERCADOPAGO] ¡ERROR CRÍTICO AL CREAR LA PREFERENCIA! ---',
-      );
-
-      // LOG #4: CAUSA DETALLADA DEL ERROR (ESTO APARECE EN TU CAPTURA)
-      console.error('--- Causa detallada del error (error.cause): ---');
-      console.error(JSON.stringify(error.cause, null, 2));
-
-      console.error('--- Objeto de error COMPLETO capturado: ---');
-      console.error(error);
-
-      throw new BadRequestException(
-        'No se pudo crear la preferencia de pago con MercadoPago.',
-      );
-    }
+        external_reference: user.id,
+      },
+    });
+    return { preferenceId: result.id };
   }
 
-  // --- FUNCIÓN DE WEBHOOK MEJORADA CON LOGS DETALLADOS ---
-  async handlePaymentNotification(paymentId: string) {
-    console.log(
-      `--- [WEBHOOK] Notificación recibida para el ID de pago: ${paymentId} ---`,
-    );
-    try {
-      const paymentClient = new Payment(this.client);
-      const payment = await paymentClient.get({ id: paymentId });
-
-      // LOG CLAVE: Imprime el objeto de pago COMPLETO que recibimos del webhook.
-      console.log(
-        '--- [WEBHOOK] Objeto de pago completo recibido de Mercado Pago: ---',
-      );
-      console.log(JSON.stringify(payment, null, 2));
-
-      if (payment.status === 'approved') {
-        console.log(
-          `--- [WEBHOOK] ¡Pago Aprobado! Procesando orden para: ${payment.payer?.email}`,
-        );
-        // Aquí iría tu lógica para crear la orden, vaciar el carrito, etc.
-        const userEmail = payment.payer?.email;
-        if (userEmail) {
-          await this.mailService.sendMail({
-            to: userEmail,
-            subject: 'Confirmación de tu pedido en El Parche Plotter',
-            html: `<p>¡Gracias por tu compra! Tu pago con ID ${payment.id} ha sido aprobado.</p>`,
-          });
-          console.log(
-            `--- [WEBHOOK] Email de confirmación enviado a ${userEmail}`,
-          );
-        }
-      } else if (payment.status === 'rejected') {
-        console.error(`--- [WEBHOOK] ¡PAGO RECHAZADO! ---`);
-        console.error(
-          `> Motivo del rechazo (status_detail): ${payment.status_detail}`,
-        );
-      } else {
-        console.warn(
-          `--- [WEBHOOK] Pago recibido con estado no manejado: ${payment.status} (${payment.status_detail}) ---`,
-        );
-      }
-    } catch (error) {
-      console.error(
-        '--- [WEBHOOK] ERROR al manejar la notificación de pago: ---',
-      );
-      console.error(JSON.stringify(error.cause, null, 2));
-      throw new InternalServerErrorException(
-        'Error al procesar la notificación de Mercado Pago',
-      );
-    }
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async createPaymentFromBrick(paymentData: any, user: any) {
-    const { formData } = paymentData; // El objeto que nos enviaste en el log
+    const { formData, orderData } = paymentData;
+    const paymentClient = new Payment(this.client);
+    const payment = await paymentClient.create({ body: formData });
 
-    try {
-      const paymentClient = new Payment(this.client);
-
-      console.log('--- [BACKEND] Creando pago con los siguientes datos: ---');
-      console.log(JSON.stringify(formData, null, 2));
-
-      const paymentRequestBody = {
-        transaction_amount: formData.transaction_amount,
-        token: formData.token,
-        description: 'Compra en El Parche Plotter', // Puedes personalizar esto
-        installments: formData.installments,
-        payment_method_id: formData.payment_method_id,
-        issuer_id: formData.issuer_id,
-        payer: {
-          email: formData.payer.email,
-          identification: {
-            type: formData.payer.identification.type,
-            number: formData.payer.identification.number,
-          },
-        },
+    if (payment.status === 'approved') {
+      console.log(
+        `--- [PAGO DIRECTO] Aprobado. Procesando orden para pago ID: ${payment.id}`,
+      );
+      await this.processSuccessfulPayment(
+        String(payment.id),
+        orderData,
+        user.id,
+      );
+      return {
+        success: true,
+        message: 'Pago aprobado y orden creada.',
+        paymentId: payment.id,
       };
+    } else {
+      throw new BadRequestException(
+        `El pago fue rechazado: ${payment.status_detail}`,
+      );
+    }
+  }
 
-      const payment = await paymentClient.create({ body: paymentRequestBody });
+  async handlePaymentNotification(paymentId: string) {
+    const paymentClient = new Payment(this.client);
+    const payment = await paymentClient.get({ id: paymentId });
 
-      console.log('--- [BACKEND] Respuesta de la API de Mercado Pago: ---');
-      console.log(JSON.stringify(payment, null, 2));
+    if (payment.status === 'approved') {
+      const userId = payment.external_reference;
+      if (userId) {
+        console.log(
+          `--- [WEBHOOK] Pago Aprobado. Procesando orden para pago ID: ${paymentId}`,
+        );
 
-      if (payment.status === 'approved') {
-        console.log(`--- ¡PAGO APROBADO! ID: ${payment.id} ---`);
-        // --- LÓGICA DE NEGOCIO ---
-        // Aquí es donde creas la orden, limpias el carrito y envías el email
-        // await this.ordersService.addOrder(paymentData.orderData.products, user.id);
-        // await this.cartService.clearCart(user.id);
-        // ... etc.
-        return {
-          success: true,
-          message: 'Pago aprobado y orden creada.',
-          paymentId: payment.id,
-        };
-      } else {
-        // El pago fue rechazado por el banco o por el antifraude
-        throw new BadRequestException(
-          `El pago fue rechazado. Motivo: ${payment.status_detail}`,
+        const orderData = { products: [] }; // Simplificación para el webhook
+        await this.processSuccessfulPayment(
+          String(payment.id),
+          orderData,
+          userId,
         );
       }
-    } catch (error) {
-      console.error(
-        '--- [BACKEND] Error al crear el pago:',
-        error.cause || error.message,
+    }
+  }
+
+  private async processSuccessfulPayment(
+    paymentId: string,
+    orderData: any,
+    userId: string,
+  ) {
+    const existingOrder = await this.ordersRepository.findOne({
+      where: { paymentId },
+    });
+    if (existingOrder) {
+      console.log(
+        `> La orden para el pago ${paymentId} ya existe. Omitiendo acciones.`,
       );
-      throw new InternalServerErrorException('No se pudo procesar el pago.');
+      return;
+    }
+
+    console.log(`> Procesando nueva orden para el pago ${paymentId}...`);
+    const createOrderDto: CreateOrderDto = {
+      userId,
+      products: orderData.products,
+    };
+    const newOrderArray = await this.ordersService.create(createOrderDto);
+    const newOrder = newOrderArray[0];
+    newOrder.paymentId = paymentId;
+    await this.ordersRepository.save(newOrder);
+
+    console.log(`> Orden ${newOrder.id} creada y stock actualizado.`);
+    await this.cartService.clearCart(userId);
+    console.log(`> Carrito del usuario ${userId} vaciado.`);
+
+    const orderDetailsForTemplate = newOrder.orderDetails[0].products.map(
+      (product) => ({
+        name: product.name,
+        quantity: 1, // Asumiendo cantidad 1
+        price: new Intl.NumberFormat('es-CO', {
+          style: 'currency',
+          currency: 'COP',
+        }).format(Number(product.price)),
+      }),
+    );
+    const totalFormatted = new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+    }).format(Number(newOrder.orderDetails[0].price));
+
+    const fullUser = await this.usersRepository.findOneBy({ id: userId });
+    if (fullUser) {
+      const templateData = {
+        name: fullUser.name,
+        orderId: newOrder.id.split('-')[0].toUpperCase(),
+        date: format(newOrder.date, 'dd/MM/yyyy'), // <-- Corregido
+        paymentId: paymentId,
+        products: orderDetailsForTemplate,
+        total: totalFormatted,
+        year: new Date().getFullYear(),
+      };
+
+      const pdfBuffer = await this.pdfService.generateInvoice(templateData); // <-- Corregido
+
+      await this.mailService.sendMail({
+        to: fullUser.email,
+        subject: `✅ Confirmación de tu compra #${templateData.orderId} en El Parche Plotter`,
+        template: 'order-confirmation',
+        context: templateData,
+        attachments: [
+          {
+            filename: `factura-${templateData.orderId}.pdf`,
+            content: pdfBuffer,
+            contentType: 'application/pdf',
+          },
+        ],
+      });
+      console.log(
+        `> Email de confirmación con factura PDF enviado a ${fullUser.email}.`,
+      );
+    }
+  }
+
+  validateWebhookSignature(
+    signature: string,
+    requestId: string,
+    paymentId: string,
+  ): boolean {
+    try {
+      const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+      if (!secret)
+        throw new Error('El secreto del webhook no está configurado.');
+
+      const parts = signature.split(',');
+      const timestamp = parts
+        .find((part) => part.startsWith('ts='))
+        ?.split('=')[1];
+      const receivedHash = parts
+        .find((part) => part.startsWith('v1='))
+        ?.split('=')[1];
+
+      if (!timestamp || !receivedHash) return false;
+
+      const manifest = `id:${paymentId};request-id:${requestId};ts:${timestamp};`;
+      const hmac = crypto.createHmac('sha256', secret);
+      hmac.update(manifest);
+      const calculatedHash = hmac.digest('hex');
+
+      return calculatedHash === receivedHash;
+    } catch (error) {
+      console.error('Error validando la firma del webhook:', error);
+      return false;
     }
   }
 }

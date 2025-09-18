@@ -16,6 +16,7 @@ import { CartModule } from './cart/cart.module';
 import { Auth0Module } from './auth0/auth0.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { PdfModule } from './pdf/pdf.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { AppService } from './app.service';
     MercadoPagoModule,
     CartModule,
     MailModule,
+    PdfModule,
     Auth0Module,
     JwtModule.register({
       global: true,

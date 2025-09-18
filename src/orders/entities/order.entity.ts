@@ -19,6 +19,9 @@ export class Orders {
   @Column()
   date: Date;
 
+  @Column({ type: 'varchar', nullable: true })
+  paymentId: string;
+
   @OneToOne(() => OrderDetails, (orderDetails) => orderDetails.order)
   orderDetails: OrderDetails;
 

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Compra</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+        .header { background-color: #111827; color: #ffffff; padding: 20px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .content h2 { color: #111827; }
+        .order-details, .customer-details { margin-bottom: 20px; }
+        .order-details p, .customer-details p { margin: 5px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #dddddd; text-align: left; padding: 12px; }
+        th { background-color: #f2f2f2; }
+        .total { text-align: right; font-size: 18px; font-weight: bold; margin-top: 20px; }
+        .footer { background-color: #f4f4f4; color: #888; padding: 20px; text-align: center; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>El Parche Plotter</h1>
+        </div>
+        <div class="content">
+            <h2>¡Gracias por tu compra, {{name}}!</h2>
+            <p>Hemos recibido tu pedido y ya lo estamos preparando. Aquí tienes los detalles de tu compra.</p>
+
+            <div class="order-details">
+                <p><strong>ID de Orden:</strong> {{orderId}}</p>
+                <p><strong>Fecha:</strong> {{date}}</p>
+                <p><strong>ID de Pago (Mercado Pago):</strong> {{paymentId}}</p>
+            </div>
+
+            <h3>Resumen del Pedido</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each products}}
+                    <tr>
+                        <td>{{this.name}}</td>
+                        <td>{{this.quantity}}</td>
+                        <td>{{this.price}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+
+            <p class="total">Total Pagado: {{total}}</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{year}} El Parche Plotter. Todos los derechos reservados.</p>
+            <p>Si tienes alguna pregunta, contáctanos en nuestro sitio web.</p>
+        </div>
+    </div>
+</body>
+</html>
